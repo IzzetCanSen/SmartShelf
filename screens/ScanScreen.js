@@ -1,10 +1,32 @@
-import React from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Dimensions, StyleSheet } from "react-native";
+import { BarCodeScanner } from "expo-barcode-scanner";
+
+const { width, height } = Dimensions.get("window");
+const scannerSize = 250;
 
 const ScanScreen = ({ navigation }) => {
+  const [scanned, setScanned] = useState(false);
+  const [scannedData, setScannedData] = useState(null);
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    setScannedData({ type, data });
+    console.log(`Bar code scanned: ${type} - ${data}`);
+    console.log(scannedData);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Scan Screen</Text>
+      <BarCodeScanner
+        style={StyleSheet.absoluteFillObject}
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      />
+      <View style={styles.overlay}>
+        <View style={styles.rectangleContainer}>
+          <View style={styles.rectangle} />
+        </View>
+      </View>
     </View>
   );
 };
@@ -15,9 +37,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  text: {
-    fontSize: 20,
-    marginBottom: 20,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    // backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  rectangleContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  rectangle: {
+    height: scannerSize,
+    width: scannerSize,
+    borderWidth: 2,
+    borderColor: "white",
+    backgroundColor: "transparent",
   },
 });
 
