@@ -10,7 +10,16 @@ const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarStyle: [
+          {
+            height: 70,
+          },
+          null,
+        ],
+      }}
+    >
       <Tab.Screen
         name="Inventory"
         component={InventoryScreen}

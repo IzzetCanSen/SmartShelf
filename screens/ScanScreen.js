@@ -1,32 +1,54 @@
-import React, { useState } from "react";
-import { View, Dimensions, StyleSheet } from "react-native";
-import { BarCodeScanner } from "expo-barcode-scanner";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Camera } from "expo-camera";
 
-const { width, height } = Dimensions.get("window");
-const scannerSize = 250;
+const scannerSize = 300;
 
-const ScanScreen = ({ navigation }) => {
-  const [scanned, setScanned] = useState(false);
-  const [scannedData, setScannedData] = useState(null);
+const ScanScreen = () => {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanData, setScanData] = useState();
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
 
   const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    setScannedData({ type, data });
-    console.log(`Bar code scanned: ${type} - ${data}`);
-    console.log(scannedData);
+    setScanData(data);
+    console.log(`Bar code scanned: ${data}`);
+    setScanData(undefined);
   };
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text>No camera permission.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <BarCodeScanner
-        style={StyleSheet.absoluteFillObject}
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-      />
-      <View style={styles.overlay}>
-        <View style={styles.rectangleContainer}>
-          <View style={styles.rectangle} />
+      <Camera
+        style={styles.camera}
+        onBarCodeScanned={scanData ? undefined : handleBarCodeScanned}
+        ratio="16:9"
+      >
+        <View style={styles.overlay}>
+          <View style={styles.unfocusedContainer}></View>
+          <View style={styles.middleContainer}>
+            <View style={styles.unfocusedContainer}></View>
+            <View style={styles.focusedContainer}></View>
+            <View style={styles.unfocusedContainer}></View>
+          </View>
+          <View style={styles.unfocusedContainer}></View>
         </View>
-      </View>
+      </Camera>
     </View>
   );
 };
@@ -34,23 +56,24 @@ const ScanScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  camera: {
+    flex: 1,
+    aspectRatio: 9 / 15,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    // backgroundColor: "rgba(0,0,0,0.5)",
   },
-  rectangleContainer: {
+  unfocusedContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
-  rectangle: {
-    height: scannerSize,
-    width: scannerSize,
-    borderWidth: 2,
-    borderColor: "white",
+  middleContainer: {
+    flexDirection: "row",
+    flex: 0.6,
+  },
+  focusedContainer: {
+    flex: 7,
     backgroundColor: "transparent",
   },
 });
