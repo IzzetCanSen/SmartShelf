@@ -10,8 +10,10 @@ import {
 import { Camera } from "expo-camera";
 import { useFocusEffect } from "@react-navigation/native";
 import { useIsFocused } from "@react-navigation/native";
+import * as SQLite from "expo-sqlite";
 
 const ScanScreen = () => {
+  const db = SQLite.openDatabase("inventoryDatabase.db");
   const [hasPermission, setHasPermission] = useState(null);
   const [scanData, setScanData] = useState(null);
   const [productData, setProductData] = useState(null);
@@ -28,6 +30,24 @@ const ScanScreen = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    // Create the "Product" table if it doesn't exist
+    db.transaction((tx) => {
+      tx.executeSql(
+        "CREATE TABLE IF NOT EXISTS Product (id INTEGER PRIMARY KEY AUTOINCREMENT, product_name TEXT, image_url TEXT, brands TEXT);",
+        [],
+        (tx, result) => {
+          if (result.rowsAffected > 0) {
+            console.log("Product table is ready");
+          }
+        },
+        (error) => {
+          console.error("Error creating Product table:", error);
+        }
+      );
+    });
+  }, [db]);
+
   useFocusEffect(
     React.useCallback(() => {
       setScanning(true);
@@ -39,6 +59,29 @@ const ScanScreen = () => {
       }
     }, [])
   );
+
+  const addProductToDatabase = () => {
+    if (!productData || !productData.product) {
+      console.error("Product data is not available");
+      return;
+    }
+
+    const { product_name, image_front_small_url, brands } = productData.product;
+    console.log(product_name);
+    console.log(image_front_small_url);
+    console.log(brands);
+    db.transaction((tx) => {
+      tx.executeSql(
+        "INSERT INTO Product (product_name, image_url, brands) values (?, ?, ?)",
+        [product_name, image_front_small_url, brands],
+        (tx, result) => {
+          if (result.rowsAffected > 0) {
+            console.log("Product added successfully");
+          }
+        }
+      );
+    });
+  };
 
   const handleBarCodeScanned = async ({ type, data }) => {
     if (scanning) {
@@ -119,7 +162,7 @@ const ScanScreen = () => {
           <View style={styles.modalButtonContainer}>
             <TouchableOpacity
               style={styles.button}
-              onPress={handleCancelButton}
+              onPress={addProductToDatabase}
             >
               <Text>Save</Text>
             </TouchableOpacity>
