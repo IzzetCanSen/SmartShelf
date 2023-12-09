@@ -12,7 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useIsFocused } from "@react-navigation/native";
 import * as SQLite from "expo-sqlite";
 
-const ScanScreen = () => {
+const ScanScreen = ({ navigation }) => {
   const db = SQLite.openDatabase("inventoryDatabase.db");
   const [hasPermission, setHasPermission] = useState(null);
   const [scanData, setScanData] = useState(null);
@@ -20,6 +20,7 @@ const ScanScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [scanning, setScanning] = useState(true);
   const cameraRef = useRef(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   const isFocused = useIsFocused();
 
@@ -34,7 +35,7 @@ const ScanScreen = () => {
     // Create the "Product" table if it doesn't exist
     db.transaction((tx) => {
       tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS Product (id INTEGER PRIMARY KEY AUTOINCREMENT, product_name TEXT, image_url TEXT, brands TEXT);",
+        "CREATE TABLE IF NOT EXISTS Product (id INTEGER PRIMARY KEY AUTOINCREMENT, product_name TEXT, image_url TEXT, brands TEXT, amount INTEGER DEFAULT 1);",
         [],
         (tx, result) => {
           if (result.rowsAffected > 0) {
@@ -53,7 +54,7 @@ const ScanScreen = () => {
       setScanning(true);
       setScanData(null);
       setProductData(null);
-
+      setIsSaved(false);
       if (cameraRef.current) {
         cameraRef.current.resumePreview();
       }
@@ -61,26 +62,39 @@ const ScanScreen = () => {
   );
 
   const addProductToDatabase = () => {
+    console.log("pressed");
     if (!productData || !productData.product) {
       console.error("Product data is not available");
       return;
     }
 
     const { product_name, image_front_small_url, brands } = productData.product;
-    console.log(product_name);
-    console.log(image_front_small_url);
-    console.log(brands);
-    db.transaction((tx) => {
-      tx.executeSql(
-        "INSERT INTO Product (product_name, image_url, brands) values (?, ?, ?)",
-        [product_name, image_front_small_url, brands],
-        (tx, result) => {
-          if (result.rowsAffected > 0) {
-            console.log("Product added successfully");
+
+    db.transaction(
+      (tx) => {
+        tx.executeSql(
+          "INSERT INTO Product (product_name, image_url, brands, amount) VALUES (?, ?, ?, 1)",
+          [product_name, image_front_small_url, brands],
+          (tx, result) => {
+            if (result.rowsAffected > 0) {
+              console.log("Product added successfully");
+              setIsSaved(true);
+            } else {
+              console.log("Error adding product");
+            }
+          },
+          (tx, error) => {
+            console.error("Transaction error:", error);
           }
-        }
-      );
-    });
+        );
+      },
+      (error) => {
+        console.error("Error during transaction:", error);
+      },
+      () => {
+        console.log("Transaction completed successfully");
+      }
+    );
   };
 
   const handleBarCodeScanned = async ({ type, data }) => {
@@ -107,6 +121,7 @@ const ScanScreen = () => {
     setScanData(null);
     setModalVisible(false);
     setProductData(null);
+    setIsSaved(false);
   };
 
   if (hasPermission === null) {
@@ -147,33 +162,56 @@ const ScanScreen = () => {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          {productData ? (
-            <View>
-              <Text>{productData.product.product_name}</Text>
-              <Image
-                style={styles.productImage}
-                source={{ uri: productData.product.image_front_small_url }}
-              />
+        {!isSaved ? (
+          <View style={styles.modalContainer}>
+            {productData ? (
+              <View>
+                <Text>{productData.product.product_name}</Text>
+                <Image
+                  style={styles.productImage}
+                  source={{ uri: productData.product.image_front_small_url }}
+                />
+              </View>
+            ) : (
+              <Text>Loading...</Text>
+            )}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={addProductToDatabase}
+              >
+                <Text>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleCancelButton}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
             </View>
-          ) : (
-            <Text>Loading...</Text>
-          )}
-          <View style={styles.modalButtonContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={addProductToDatabase}
-            >
-              <Text>Save</Text>
-            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.modalContainer}>
+            <Text style={styles.confirmationText}>
+              Product Saved Successfully
+            </Text>
             <TouchableOpacity
               style={styles.button}
               onPress={handleCancelButton}
             >
-              <Text>Cancel</Text>
+              <Text>Scan Another Product</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setModalVisible(false);
+                navigation.navigate("Inventory"); // Navigating to the Inventory screen
+              }}
+            >
+              <Text>Go to Inventory</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        )}
       </Modal>
     </View>
   );

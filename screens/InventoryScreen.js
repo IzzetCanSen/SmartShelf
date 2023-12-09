@@ -8,38 +8,21 @@ import {
   TouchableOpacity,
 } from "react-native";
 import * as SQLite from "expo-sqlite";
+import { useFocusEffect } from "@react-navigation/native";
 
 const InventoryScreen = ({ navigation }) => {
   const db = SQLite.openDatabase("inventoryDatabase.db");
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT * FROM Product",
-        [],
-        (tx, result) => {
-          const len = result.rows.length;
-          const productsArray = [];
+    fetchProducts();
+  }, []);
 
-          for (let i = 0; i < len; i++) {
-            const row = result.rows.item(i);
-            productsArray.push({
-              id: row.id,
-              product_name: row.product_name,
-              image_url: row.image_url,
-              brands: row.brands,
-            });
-          }
-
-          setProducts(productsArray);
-        },
-        (error) => {
-          console.error("Error fetching products:", error);
-        }
-      );
-    });
-  }, [db]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProducts();
+    }, [])
+  );
 
   const handleDelete = (productId) => {
     db.transaction((tx) => {
@@ -55,6 +38,37 @@ const InventoryScreen = ({ navigation }) => {
         },
         (error) => {
           console.error("Error deleting product:", error);
+        }
+      );
+    });
+  };
+
+  const handleDecrement = (productId, currentAmount) => {
+    if (currentAmount > 0) {
+      const newAmount = currentAmount - 1;
+      updateAmount(productId, newAmount);
+    }
+  };
+
+  const handleIncrement = (productId, currentAmount) => {
+    const newAmount = currentAmount + 1;
+    updateAmount(productId, newAmount);
+  };
+
+  const updateAmount = (productId, newAmount) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        "UPDATE Product SET amount = ? WHERE id = ?",
+        [newAmount, productId],
+        (tx, result) => {
+          if (result.rowsAffected > 0) {
+            console.log("Amount updated successfully");
+            // Refresh the products after updating amount
+            fetchProducts();
+          }
+        },
+        (error) => {
+          console.error("Error updating amount:", error);
         }
       );
     });
@@ -76,6 +90,7 @@ const InventoryScreen = ({ navigation }) => {
               product_name: row.product_name,
               image_url: row.image_url,
               brands: row.brands,
+              amount: row.amount,
             });
           }
 
@@ -97,6 +112,22 @@ const InventoryScreen = ({ navigation }) => {
           <View style={styles.productItem}>
             <Text>{item.brands}</Text>
             <Text>{item.product_name}</Text>
+            <View style={styles.amountContainer}>
+              <TouchableOpacity
+                style={styles.amountButton}
+                onPress={() => handleDecrement(item.id, item.amount)}
+                disabled={item.amount === 0}
+              >
+                <Text>-</Text>
+              </TouchableOpacity>
+              <Text>{item.amount}</Text>
+              <TouchableOpacity
+                style={styles.amountButton}
+                onPress={() => handleIncrement(item.id, item.amount)}
+              >
+                <Text>+</Text>
+              </TouchableOpacity>
+            </View>
             <Image
               style={styles.productImage}
               source={{ uri: item.image_url }}
@@ -130,6 +161,16 @@ const styles = StyleSheet.create({
   deleteButton: {
     color: "red",
     marginTop: 5,
+  },
+  amountContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  amountButton: {
+    backgroundColor: "#eee",
+    padding: 5,
+    marginHorizontal: 5,
+    borderRadius: 5,
   },
 });
 
