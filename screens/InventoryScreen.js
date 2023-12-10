@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import * as SQLite from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
+import Icons from "react-native-vector-icons/MaterialCommunityIcons";
 
 const InventoryScreen = ({ navigation }) => {
   const db = SQLite.openDatabase("inventoryDatabase.db");
@@ -32,7 +33,6 @@ const InventoryScreen = ({ navigation }) => {
         (tx, result) => {
           if (result.rowsAffected > 0) {
             console.log("Product deleted successfully");
-            // Refresh the products after deletion
             fetchProducts();
           }
         },
@@ -63,7 +63,6 @@ const InventoryScreen = ({ navigation }) => {
         (tx, result) => {
           if (result.rowsAffected > 0) {
             console.log("Amount updated successfully");
-            // Refresh the products after updating amount
             fetchProducts();
           }
         },
@@ -94,7 +93,7 @@ const InventoryScreen = ({ navigation }) => {
             });
           }
 
-          setProducts(productsArray);
+          setProducts(productsArray.reverse());
         },
         (error) => {
           console.error("Error fetching products:", error);
@@ -106,35 +105,45 @@ const InventoryScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <FlatList
+        contentContainerStyle={{ gap: 15 }}
+        style={styles.productsContainer}
         data={products}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.productItem}>
-            <Text>{item.brands}</Text>
-            <Text>{item.product_name}</Text>
-            <View style={styles.amountContainer}>
-              <TouchableOpacity
-                style={styles.amountButton}
-                onPress={() => handleDecrement(item.id, item.amount)}
-                disabled={item.amount === 0}
-              >
-                <Text>-</Text>
-              </TouchableOpacity>
-              <Text>{item.amount}</Text>
-              <TouchableOpacity
-                style={styles.amountButton}
-                onPress={() => handleIncrement(item.id, item.amount)}
-              >
-                <Text>+</Text>
-              </TouchableOpacity>
+            <View style={styles.productImageWrapper}>
+              <Image
+                style={styles.productImage}
+                source={{ uri: item.image_url }}
+              />
             </View>
-            <Image
-              style={styles.productImage}
-              source={{ uri: item.image_url }}
-            />
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <Text style={styles.deleteButton}>Delete</Text>
-            </TouchableOpacity>
+            <View style={styles.productDetailWrapper}>
+              <View>
+                <Text style={styles.productDetailBrand}>{item.brands}</Text>
+                <Text>{item.product_name}</Text>
+              </View>
+              <View style={styles.productSubContainer}>
+                <View style={styles.amountContainer}>
+                  <TouchableOpacity
+                    style={styles.amountButton}
+                    onPress={() => handleDecrement(item.id, item.amount)}
+                    disabled={item.amount === 0}
+                  >
+                    <Text style={styles.amountButtonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{item.amount}</Text>
+                  <TouchableOpacity
+                    style={styles.amountButton}
+                    onPress={() => handleIncrement(item.id, item.amount)}
+                  >
+                    <Text style={styles.amountButtonTextPlus}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                  <Icons style={styles.deleteButton} name="delete" size={26} />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
       />
@@ -148,29 +157,68 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  productsContainer: {
+    width: "100%",
+    marginTop: 30,
+    marginBottom: 30,
+  },
   productItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    width: "90%",
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderRadius: 40,
+    overflow: "hidden",
+    flexDirection: "row",
+  },
+  productImageWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 40,
+    overflow: "hidden",
   },
   productImage: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  productDetailWrapper: {
+    padding: 10,
+    justifyContent: "space-between",
+  },
+  productDetailBrand: {
+    fontWeight: "700",
+  },
+  productSubContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 220,
+    alignItems: "center",
   },
   deleteButton: {
     color: "red",
     marginTop: 5,
+    fontSize: 24,
   },
   amountContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 7,
   },
   amountButton: {
-    backgroundColor: "#eee",
     padding: 5,
     marginHorizontal: 5,
     borderRadius: 5,
+  },
+  amountButtonText: {
+    fontWeight: "700",
+    fontSize: 24,
+  },
+  amountButtonTextPlus: {
+    fontWeight: "700",
+    fontSize: 23,
+  },
+  amountText: {
+    fontSize: 16,
   },
 });
 

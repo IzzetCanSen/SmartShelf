@@ -50,8 +50,8 @@ const AppNavigator = () => {
           null,
         ],
         tabBarItemStyle: {
-          marginTop: 10, // Adjust the marginBottom as needed
-          marginBottom: 10, // Adjust the marginBottom as needed
+          marginTop: 10,
+          marginBottom: 10,
         },
       }}
     >

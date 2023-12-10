@@ -45,7 +45,7 @@ const ShoppingListScreen = ({ navigation }) => {
             });
           }
 
-          setProducts(productsArray);
+          setProducts(productsArray.reverse());
         },
         (error) => {
           console.error("Error fetching products:", error);

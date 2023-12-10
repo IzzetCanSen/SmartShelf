@@ -205,7 +205,7 @@ const ScanScreen = ({ navigation }) => {
               style={styles.button}
               onPress={() => {
                 setModalVisible(false);
-                navigation.navigate("Inventory"); // Navigating to the Inventory screen
+                navigation.navigate("Inventory");
               }}
             >
               <Text>Go to Inventory</Text>
