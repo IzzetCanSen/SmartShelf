@@ -178,30 +178,42 @@ const ScanScreen = ({ navigation }) => {
           <View style={styles.modalContainer}>
             {productData ? (
               <View>
-                <View>
-                  <Text>{productData.product.product_name}</Text>
-                  <Image
-                    style={styles.productImage}
-                    source={{ uri: productData.product.image_front_small_url }}
-                  />
+                <View style={styles.productItem}>
+                  <View style={styles.productImageWrapper}>
+                    <Image
+                      style={styles.productImage}
+                      source={{
+                        uri: productData.product.image_front_small_url,
+                      }}
+                    />
+                  </View>
+                  <View style={styles.productDetailWrapper}>
+                    <View>
+                      <Text style={styles.productDetailBrand}>
+                        {productData.product.brands}
+                      </Text>
+                      <Text>{productData.product.product_name}</Text>
+                    </View>
+                  </View>
                 </View>
+
                 <View style={styles.modalButtonContainer}>
                   <TouchableOpacity
                     style={styles.button}
                     onPress={addProductToDatabase}
                   >
-                    <Text>Save</Text>
+                    <Text style={styles.buttonText}>Save</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.button}
+                    style={[styles.button, styles.closeButton]}
                     onPress={handleCancelButton}
                   >
-                    <Text>Cancel</Text>
+                    <Text style={styles.buttonText}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
-              <View>
+              <View style={styles.errorContainer}>
                 <Text>
                   This product could not be found. Scan another product please
                 </Text>
@@ -209,7 +221,7 @@ const ScanScreen = ({ navigation }) => {
                   style={styles.button}
                   onPress={handleCancelButton}
                 >
-                  <Text>Scan</Text>
+                  <Text style={styles.buttonText}>Scan Another</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -219,21 +231,23 @@ const ScanScreen = ({ navigation }) => {
             <Text style={styles.confirmationText}>
               Product Saved Successfully
             </Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleCancelButton}
-            >
-              <Text>Scan Another Product</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                setModalVisible(false);
-                navigation.navigate("Inventory");
-              }}
-            >
-              <Text>Go to Inventory</Text>
-            </TouchableOpacity>
+            <View style={styles.confirmationButtonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleCancelButton}
+              >
+                <Text style={styles.buttonText}>Scan Another</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate("Inventory");
+                }}
+              >
+                <Text style={styles.buttonText}>Inventory</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </Modal>
@@ -268,13 +282,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#F4F4F9",
   },
   button: {
     marginTop: 20,
-    padding: 10,
-    backgroundColor: "blue",
-    borderRadius: 5,
+    paddingTop: 15,
+    paddingRight: 20,
+    paddingBottom: 15,
+    paddingLeft: 20,
+    backgroundColor: "#456BFF",
+    borderRadius: 15,
+  },
+  closeButton: {
+    backgroundColor: "#FF4545",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "700",
   },
   productImage: {
     width: 200,
@@ -285,6 +309,45 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     columnGap: 10,
+  },
+  productsContainer: {
+    width: "100%",
+    marginTop: 30,
+    marginBottom: 30,
+  },
+  productItem: {
+    width: "90%",
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    overflow: "hidden",
+    flexDirection: "row",
+  },
+  productImageWrapper: {
+    width: 150,
+    height: 150,
+    borderRadius: 30,
+    overflow: "hidden",
+  },
+  productImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  productDetailWrapper: {
+    padding: 15,
+    justifyContent: "center",
+  },
+  productDetailBrand: {
+    fontWeight: "700",
+  },
+  confirmationButtonContainer: {
+    flexDirection: "row",
+    columnGap: 10,
+  },
+  errorContainer: {
+    width: "60%",
+    alignItems: "center",
   },
 });
 
