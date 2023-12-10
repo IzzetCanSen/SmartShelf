@@ -14,6 +14,7 @@ import { useFocusEffect } from "@react-navigation/native";
 const ShoppingListScreen = ({ navigation }) => {
   const db = SQLite.openDatabase("inventoryDatabase.db");
   const [products, setProducts] = useState([]);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
 
   useEffect(() => {
     fetchProducts();
@@ -54,20 +55,70 @@ const ShoppingListScreen = ({ navigation }) => {
     });
   };
 
+  const handleProductPress = (productId) => {
+    // Toggle the selected state for the product ID
+    setSelectedProductIds((prevSelectedProductIds) => {
+      if (prevSelectedProductIds.includes(productId)) {
+        // Remove the ID if it's already selected
+        return prevSelectedProductIds.filter((id) => id !== productId);
+      } else {
+        // Add the ID if it's not selected
+        return [...prevSelectedProductIds, productId];
+      }
+    });
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
+        style={styles.productsContainer}
+        contentContainerStyle={{ gap: 15 }}
         data={products}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.productItem}>
-            <Text>{item.brands}</Text>
-            <Text>{item.product_name}</Text>
-            <Image
-              style={styles.productImage}
-              source={{ uri: item.image_url }}
-            />
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.productItem,
+              {
+                backgroundColor: selectedProductIds.includes(item.id)
+                  ? "#456BFF"
+                  : "#fff",
+              },
+            ]}
+            onPress={() => handleProductPress(item.id)}
+          >
+            <View style={styles.productImageWrapper}>
+              <Image
+                style={styles.productImage}
+                source={{ uri: item.image_url }}
+              />
+            </View>
+            <View style={styles.productDetailWrapper}>
+              <View>
+                <Text
+                  style={[
+                    styles.productDetailBrand,
+                    {
+                      color: selectedProductIds.includes(item.id)
+                        ? "white"
+                        : "black",
+                    },
+                  ]}
+                >
+                  {item.brands}
+                </Text>
+                <Text
+                  style={{
+                    color: selectedProductIds.includes(item.id)
+                      ? "white"
+                      : "black",
+                  }}
+                >
+                  {item.product_name}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         )}
       />
     </View>
@@ -80,15 +131,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  productsContainer: {
+    width: "100%",
+    marginTop: 30,
+    marginBottom: 30,
+  },
   productItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    width: "90%",
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    overflow: "hidden",
+    flexDirection: "row",
+  },
+  productImageWrapper: {
+    width: 90,
+    height: 90,
+    borderRadius: 30,
+    overflow: "hidden",
   },
   productImage: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  productDetailWrapper: {
+    padding: 10,
+    justifyContent: "center",
+  },
+  productDetailBrand: {
+    fontWeight: "700",
   },
 });
 
