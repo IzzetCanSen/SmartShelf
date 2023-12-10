@@ -106,8 +106,20 @@ const ScanScreen = ({ navigation }) => {
         const response = await fetch(
           `https://world.openfoodfacts.org/api/v3/product/${data}.json`
         );
+        console.log(
+          `https://world.openfoodfacts.org/api/v3/product/${data}.json`
+        );
         const result = await response.json();
-        setProductData(result);
+        if (result.status === "success") {
+          setProductData(result);
+        } else {
+          // Handle the failure case
+          setModalVisible(true);
+          setProductData(null);
+          setScanning(false);
+          setIsSaved(false);
+          return;
+        }
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
@@ -166,29 +178,41 @@ const ScanScreen = ({ navigation }) => {
           <View style={styles.modalContainer}>
             {productData ? (
               <View>
-                <Text>{productData.product.product_name}</Text>
-                <Image
-                  style={styles.productImage}
-                  source={{ uri: productData.product.image_front_small_url }}
-                />
+                <View>
+                  <Text>{productData.product.product_name}</Text>
+                  <Image
+                    style={styles.productImage}
+                    source={{ uri: productData.product.image_front_small_url }}
+                  />
+                </View>
+                <View style={styles.modalButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={addProductToDatabase}
+                  >
+                    <Text>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={handleCancelButton}
+                  >
+                    <Text>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : (
-              <Text>Loading...</Text>
+              <View>
+                <Text>
+                  This product could not be found. Scan another product please
+                </Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleCancelButton}
+                >
+                  <Text>Scan</Text>
+                </TouchableOpacity>
+              </View>
             )}
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={addProductToDatabase}
-              >
-                <Text>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleCancelButton}
-              >
-                <Text>Cancel</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         ) : (
           <View style={styles.modalContainer}>
