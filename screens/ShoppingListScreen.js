@@ -26,6 +26,32 @@ const ShoppingListScreen = ({ navigation }) => {
     }, [])
   );
 
+  const handleDoneButtonPress = () => {
+    db.transaction((tx) => {
+      selectedProductIds.forEach((productId) => {
+        tx.executeSql(
+          "UPDATE Product SET amount = amount + 1 WHERE id = ?",
+          [productId],
+          () => {
+            console.log(`Product with ID ${productId} amount incremented`);
+          },
+          (error) => {
+            console.error(
+              `Error incrementing amount for product ${productId}:`,
+              error
+            );
+          }
+        );
+      });
+
+      // After updating, fetch the products again to reflect the changes
+      fetchProducts();
+    });
+
+    // Clear the selectedProductIds after pressing the "Done" button
+    setSelectedProductIds([]);
+  };
+
   const fetchProducts = () => {
     db.transaction((tx) => {
       tx.executeSql(
@@ -121,6 +147,14 @@ const ShoppingListScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       />
+      {selectedProductIds.length > 0 && (
+        <TouchableOpacity
+          style={styles.doneButton}
+          onPress={handleDoneButtonPress}
+        >
+          <Text style={styles.doneButtonText}>Done</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -161,6 +195,18 @@ const styles = StyleSheet.create({
   },
   productDetailBrand: {
     fontWeight: "700",
+  },
+  doneButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#456BFF",
+    borderRadius: 15,
+    padding: 10,
+  },
+  doneButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });
 
